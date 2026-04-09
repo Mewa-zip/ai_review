@@ -2,14 +2,12 @@ import openreview
 import os
 import time
 
-# --- CONFIGURATION ---
 USERNAME = "XXXXXXXXXXXXX"
 PASSWORD = "XXXXXXXXXXXXX"
 VENUE_ID = 'ICLR.cc/2024/Conference'
 DOWNLOAD_DIR = 'openreview_data'
 LIMIT = 2
 
-# Initialize authenticated client
 client = openreview.api.OpenReviewClient(
     baseurl='https://api2.openreview.net',
     username=USERNAME,
