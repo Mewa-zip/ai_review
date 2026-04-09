@@ -2,12 +2,11 @@ import ollama
 import chromadb
 import hashlib
 from langchain_community.document_loaders import PyPDFLoader
-
+from analyze_image import analyze_visuals
 
 client = chromadb.Client()
 collection = client.get_or_create_collection(name="review_standards")
 
-# zasady do RAG
 collection.add(
     documents=[
         "Methodology: A lack of a control group or small sample size is a major red flag.",
@@ -22,7 +21,6 @@ collection.add(
 def get_paper_hash(text):
     return hashlib.md5(text.encode()).hexdigest()
 
-# ekstrakcja tekstu PDF
 def load_pdf(file_path):
     loader = PyPDFLoader(file_path)
     pages = loader.load()
@@ -31,14 +29,14 @@ def load_pdf(file_path):
 
 def write_review(pdf_path, character_type="substantive"):
     content = load_pdf(pdf_path)
-    # paper_id = get_paper_hash(content)
-
-    # if paper_id in reviewed_papers_hashes:
-    #     return f"ALERT: Paper {pdf_path} has already been reviewed"
 
     word_count = len(content.split())
 
-    # RAG
+    try:
+        visual_analysis = analyze_visuals(pdf_path)
+    except Exception as e:
+        visual_analysis = f"Błąd analizy wizualnej: {e}"
+
     results = collection.query(query_texts=[content], n_results=2)
     rag_context = " | ".join(results['documents'][0])
 
@@ -49,17 +47,20 @@ def write_review(pdf_path, character_type="substantive"):
         "aesthete": "Focus on vocabulary, grammar, spelling, and the overall visual/linguistic flow of the paper."
     }
 
-    system_instruction = f"You are a scientific reviewer. Your persona: {character_type.upper()}. {characters.get(character_type, '')}"
+    system_instruction = f"You are a scientific reviewer. Persona: {character_type.upper()}. {characters.get(character_type, '')}"
 
     full_prompt = f"""
     [RAG GUIDELINES]: 
-    Use these standards if applicable: {rag_context}
+    {rag_context}
+
+    [VISUAL ANALYSIS]:
+    {visual_analysis}
 
     [ARTICLE CONTENT]: 
-    {content[:10000]}
+    {content[:8000]}
 
     [TASK]: 
-    Write a review as your character. Be specific to the content of the article above.
+    Write a review as your character. Be specific to the content and the quality of figures/plots.
     """
 
     response = ollama.chat(model='llama3.1', messages=[
@@ -69,8 +70,7 @@ def write_review(pdf_path, character_type="substantive"):
 
     return response['message']['content']
 
-
-my_paper = "17_A_fast_algorithm_to_compute.pdf"
+my_paper = "C:\\Users\\malwi\\ai_review\\openreview_data\\eUgS9Ig8JG_SaNN__Simple_Yet_Powerful_Simplicial_aware_Neural_Networks\\paper.pdf"
 
 try:
     print(write_review(my_paper, "substantive"))
