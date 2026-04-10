@@ -1,6 +1,5 @@
 import ollama
 import chromadb
-import hashlib
 from langchain_community.document_loaders import PyPDFLoader
 from analyze_image import analyze_visuals
 
@@ -12,14 +11,11 @@ collection.add(
         "Methodology: A lack of a control group or small sample size is a major red flag.",
         "Citations: References older than 5 years without a seminal reason are considered outdated.",
         "Ethics: Any AI-based paper must disclose the specific model versions and prompts used.",
-        "Aesthetics: Frequent typos and poor LaTeX formatting decrease the paper's credibility."
+        "Aesthetics: Frequent typos and poor LaTeX formatting decrease the paper's credibility.",
+        "Visualization: Plots must have labeled axes, units, and high contrast for accessibility."
     ],
-    ids=["rule1", "rule2", "rule3", "rule4"]
+    ids=["rule1", "rule2", "rule3", "rule4", "rule5"]
 )
-
-
-def get_paper_hash(text):
-    return hashlib.md5(text.encode()).hexdigest()
 
 def load_pdf(file_path):
     loader = PyPDFLoader(file_path)
@@ -70,14 +66,15 @@ def write_review(pdf_path, character_type="substantive"):
 
     return response['message']['content']
 
-my_paper = "C:\\Users\\malwi\\ai_review\\openreview_data\\eUgS9Ig8JG_SaNN__Simple_Yet_Powerful_Simplicial_aware_Neural_Networks\\paper.pdf"
+if __name__ == "__main__":
+    my_paper = "C:\\Users\\malwi\\ai_review\\openreview_data\\eUgS9Ig8JG_SaNN__Simple_Yet_Powerful_Simplicial_aware_Neural_Networks\\paper.pdf"
 
-try:
-    print(write_review(my_paper, "substantive"))
-    print("\n")
-    print(write_review(my_paper, "hater"))
-    print("\n")
-    print(write_review(my_paper, "lazy"))
+    try:
+        print(write_review(my_paper, "substantive"))
+        print("\n")
+        print(write_review(my_paper, "hater"))
+        print("\n")
+        print(write_review(my_paper, "lazy"))
 
-except Exception as e:
-    print(f"Error: {e}")
+    except Exception as e:
+        print(f"Error: {e}")
